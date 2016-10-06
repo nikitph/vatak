@@ -21,10 +21,27 @@ import {
 } from "react-native";
 import * as atb from "react-native-animatable";
 import {GoogleSignin, GoogleSigninButton} from "react-native-google-signin";
+import ListComponent from "./ListComponent";
+import Icon from "react-native-vector-icons/MaterialIcons";
+import {Container, Content, List, ListItem, Thumbnail, Button} from "native-base";
 
 
 var styl = require('./styles');
 var cover = require("react-native/Libraries/Image/ImageResizeMode.js").cover;
+var Realm = require('realm');
+
+const medSchedSchema = {
+    name: 'medSched',
+    properties: {
+        medicine: 'string',
+        quantity: {type: 'int', default: 1},
+        frequency: {type: 'int', default: 1},
+        sdate: 'date',
+        edate: 'date'
+    }
+};
+
+let realm = new Realm({schema: [medSchedSchema]});
 
 class vatak extends Component {
     constructor(props) {
@@ -118,6 +135,177 @@ class vatak extends Component {
                 </View>
             );
         }
+
+        if (this.state.user) {
+            return (
+                <TabBarIOS
+                    unselectedTintColor="grey"
+                    tintColor="#ffa54c"
+                    barTintColor="white">
+                    <Icon.TabBarItemIOS
+                        title="List"
+                        iconName="list"
+                        iconColor="grey"
+                        selectedIconName="list"
+                        selectedIconColor="#ffa54c"
+                        renderAsOriginal={true}
+                        selected={this.state.selectedTab === 'blueTab'}
+                        onPress={() => {
+                            this.setState({
+                                selectedTab: 'blueTab',
+                            });
+                        }}>
+                        <atb.View style={styl.containerlist} animation="fadeIn" delay={500}>
+                            <ListComponent ds={realm} ref='ls' schem={medSchedSchema}/>
+                        </atb.View>
+                    </Icon.TabBarItemIOS>
+                    <Icon.TabBarItemIOS
+                        title="Record"
+                        iconName="fiber-smart-record"
+                        iconColor="grey"
+                        selectedIconName="fiber-smart-record"
+                        selectedIconColor="#ffa54c"
+                        renderAsOriginal={true}
+                        selected={this.state.selectedTab === 'redTab'}
+                        onPress={() => {
+                            this.setState({
+                                selectedTab: 'redTab',
+                            });
+                            this.refs['desc']._focus();
+                        }}>
+
+                        <Container>
+                            <Content>
+
+
+                                <List>
+
+                                    <ListItem style={{marginTop: 10}}>
+                                        <Thumbnail size={40} source={{uri: this.state.user.photo}}
+                                                   style={{alignItems: "center"}}/>
+                                        <Text style={{
+                                            fontSize: 18,
+                                            fontFamily: 'AvenirNext-UltraLight',
+                                            marginBottom: 20,
+                                            marginTop: 20
+                                        }}>
+                                            Hey {this.state.user.name.split(' ')[0]}</Text>
+
+                                    </ListItem>
+                                </List>
+
+
+                                <Button block style={{
+                                    marginLeft: 100,
+                                    marginRight: 100,
+                                    backgroundColor: 'rgba(0,0,255,0.5)'
+                                }} onPress={() => {
+
+                                    realm.write(() => {
+                                        realm.create('Thought', {
+                                            desc: this.state.desc,
+                                            distortion: this.state.distortion,
+                                            counter: this.state.counter,
+                                            anxiety: this.state.anxiety,
+                                            ddate: new Date()
+                                        });
+
+                                    });
+
+                                    this.setState({
+                                        selectedTab: 'blueTab',
+                                        medicine: '',
+                                        quantity: 1,
+                                        frequency: 1,
+                                    });
+
+                                }}> Submit </Button>
+                            </Content>
+                        </Container>
+
+                    </Icon.TabBarItemIOS>
+
+                    <Icon.TabBarItemIOS
+                        title="Account"
+                        iconName="keyboard-arrow-right"
+                        iconColor="grey"
+                        selectedIconName="keyboard-arrow-right"
+                        selectedIconColor="#ffa54c"
+                        selected={this.state.selectedTab === 'pinkTab'}
+                        renderAsOriginal={true}
+                        onPress={() => {
+                            this.setState({
+                                selectedTab: 'pinkTab'
+                            });
+                        }}>
+
+                        <Container>
+                            <Content>
+
+
+                                <List>
+
+                                    <ListItem style={{marginTop: 10}}>
+                                        <Thumbnail size={40} source={{uri: this.state.user.photo}}
+                                                   style={{alignItems: "center"}}/>
+                                        <Text style={{
+                                            fontSize: 18,
+                                            fontFamily: 'AvenirNext-UltraLight',
+                                            marginBottom: 20,
+                                            marginTop: 20
+                                        }}>
+                                            {this.state.user.name}</Text>
+
+                                    </ListItem>
+                                    <ListItem style={{marginTop: 10}}>
+
+                                        <Button block style={{
+                                            marginLeft: 100,
+                                            marginRight: 100,
+                                            backgroundColor: 'rgba(255,0,0,0.8)'
+                                        }} onPress={() => {
+
+                                            realm.write(() => {
+                                                let medSched = realm.objects('medSched');
+                                                realm.delete(medSched);
+
+                                            });
+
+                                            this.setState({
+                                                selectedTab: 'blueTab'
+                                            });
+                                        }}> Delete All Data </Button>
+                                    </ListItem>
+
+                                    <ListItem style={{marginTop: 10}}>
+
+                                        <Button block style={{
+                                            marginLeft: 100,
+                                            marginRight: 100,
+                                            backgroundColor: 'blue'
+                                        }} onPress={() => {
+                                            this.setState({
+                                                selectedTab: 'redTab'
+                                            });
+                                            this._signOut();
+                                        }
+
+
+
+                                        }> Logout </Button>
+                                    </ListItem>
+
+                                </List>
+
+                            </Content>
+                        </Container>
+                    </Icon.TabBarItemIOS>
+                </TabBarIOS>
+
+
+            );
+        }
+
     }
 }
 
